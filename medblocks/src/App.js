@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { usePGlite } from "@electric-sql/pglite-react";
+import { useLiveQuery } from "@electric-sql/pglite-react";
 
 function App() {
   const db = usePGlite();
 
-  // Ensure patients table exists
+  
   useEffect(() => {
     db.query(`
       CREATE TABLE IF NOT EXISTS patients (
@@ -16,7 +17,7 @@ function App() {
     `);
   }, [db]);
 
-  // Patient Registration Form state
+  
   const [form, setForm] = useState({ name: "", age: "", gender: "" });
   const [formError, setFormError] = useState("");
 
@@ -42,10 +43,12 @@ function App() {
     setForm({ name: "", age: "", gender: "" });
   };
 
+  const patients = useLiveQuery("SELECT * FROM patients ORDER BY id DESC;");
+
   return (
     <div style={{ maxWidth: 600, margin: "0 auto", padding: 24 }}>
       <h1>Patient Registration</h1>
-      {/* Patient Registration Form */}
+      {/* Displaying the list of patients */}
       <form onSubmit={handleSubmit} style={{ marginBottom: 32 }}>
         <div style={{ marginBottom: 8 }}>
           <label>
@@ -93,6 +96,35 @@ function App() {
         )}
         <button type="submit">Register Patient</button>
       </form>
+
+      {/* Patient List */}
+      <h2>Registered Patients</h2>
+      <div style={{ marginBottom: 24 }}>
+        {patients?.length === 0 ? (
+          <div>No patients registered yet.</div>
+        ) : (
+          <table border="1" cellPadding="6" cellSpacing="0" width="100%">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Gender</th>
+              </tr>
+            </thead>
+            <tbody>
+              {patients?.map((p) => (
+                <tr key={p.id}>
+                  <td>{p.id}</td>
+                  <td>{p.name}</td>
+                  <td>{p.age}</td>
+                  <td>{p.gender}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }
